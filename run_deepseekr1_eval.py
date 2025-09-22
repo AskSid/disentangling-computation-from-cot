@@ -2,6 +2,7 @@ import argparse
 import csv
 import json
 import re
+from tqdm import tqdm
 from pathlib import Path
 from typing import List, Optional
 
@@ -10,7 +11,8 @@ from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-CHOICE_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+CHOICE_LABELS = {0: "A", 1: "B", 2: "C", 3: "D"}
+CHOICE_LABELS_REVERSED = {v: k for k, v in CHOICE_LABELS.items()}
 
 SYSTEM_PROMPT = (
     "You are DeepSeek-R1, an AI assistant developed by DeepSeek. "
@@ -56,17 +58,17 @@ def extract_answer(generated_text: str, num_choices: int) -> str:
     match = pattern.search(generated_text)
     if match:
         candidate = match.group(1).upper()
-        if candidate in CHOICE_LABELS[:num_choices]:
+        if candidate in CHOICE_LABELS_REVERSED:
             return candidate
     for char in reversed(generated_text.strip()):
         upper_char = char.upper()
-        if upper_char in CHOICE_LABELS[:num_choices]:
+        if upper_char in CHOICE_LABELS_REVERSED:
             return upper_char
     return ""
 
 
-def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = None) -> None:
-    dataset = load_dataset("edinburgh-dawg/mmlu-redux", "anatomy")[split]
+def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = None, category: str = "anatomy") -> None:
+    dataset = load_dataset("edinburgh-dawg/mmlu-redux", category)[split]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.float16 if torch.cuda.is_available() else torch.float32
@@ -99,7 +101,7 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
         )
         writer.writeheader()
 
-        for idx, example in enumerate(dataset):
+        for idx, example in enumerate(tqdm(dataset)):
             if limit is not None and idx >= limit:
                 break
             question = example["question"]
@@ -110,7 +112,7 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
             inputs = tokenizer(prompt, return_tensors="pt").to(device)
             generated = model.generate(
                 **inputs,
-                max_new_tokens=512,
+                max_new_tokens=2048,
                 temperature=0.6,
                 top_p=0.9,
                 do_sample=True,
@@ -120,7 +122,8 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
                 generated[0][inputs["input_ids"].shape[-1] :],
                 skip_special_tokens=True,
             )
-            predicted_letter = extract_answer(generated_text, len(choices))
+            predicted_letter = CHOICE_LABELS_REVERSED[extract_answer(generated_text, len(choices))]
+
 
             writer.writerow(
                 {
@@ -131,22 +134,23 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
                     "correct_answer": answer_letter,
                     "full_cot": generated_text.strip(),
                     "predicted_answer": predicted_letter,
-                    "category": "anatomy",
+                    "category": category,
                 }
             )
 
 
 def parse_args() -> argparse.Namespace:
+    # example usage: uv run run_deepseekr1_eval.py --output "./deepseekr1_anatomy_predictions.csv" --category "anatomy"
     parser = argparse.ArgumentParser(
         description=(
-            "Run DeepSeek-R1 Distill Qwen 1.5B on the anatomy split of MMLU Redux "
+            "Run DeepSeek-R1 Distill Qwen 1.5B on a category's split of MMLU Redux "
             "and export a CSV with prompts, CoT, and predictions."
         )
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("deepseekr1_anatomy_predictions.csv"),
+        default=Path("deepseekr1_predictions.csv"),
         help="Destination CSV path.",
     )
     parser.add_argument(
@@ -161,12 +165,18 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional cap on the number of questions to process.",
     )
+    parser.add_argument(
+        "--category",
+        type=str,
+        default="anatomy",
+        help="Category to evaluate (default: anatomy).",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    run_inference(output_csv=args.output, split=args.split, limit=args.limit)
+    run_inference(output_csv=args.output, split=args.split, limit=args.limit, category=args.category)
 
 
 if __name__ == "__main__":
