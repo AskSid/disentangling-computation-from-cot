@@ -12,7 +12,6 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 CHOICE_LABELS = {0: "A", 1: "B", 2: "C", 3: "D"}
-CHOICE_LABELS_REVERSED = {v: k for k, v in CHOICE_LABELS.items()}
 
 SYSTEM_PROMPT = (
     "You are DeepSeek-R1, an AI assistant developed by DeepSeek. "
@@ -58,11 +57,11 @@ def extract_answer(generated_text: str, num_choices: int) -> str:
     match = pattern.search(generated_text)
     if match:
         candidate = match.group(1).upper()
-        if candidate in CHOICE_LABELS_REVERSED:
+        if candidate in CHOICE_LABELS.values():
             return candidate
     for char in reversed(generated_text.strip()):
         upper_char = char.upper()
-        if upper_char in CHOICE_LABELS_REVERSED:
+        if upper_char in CHOICE_LABELS.values():
             return upper_char
     return ""
 
@@ -106,7 +105,7 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
                 break
             question = example["question"]
             choices = list(example["choices"])
-            answer_letter = example["answer"]
+            answer_letter = CHOICE_LABELS[example["answer"]]
             prompt = build_prompt(tokenizer, question, choices)
 
             inputs = tokenizer(prompt, return_tensors="pt").to(device)
@@ -122,7 +121,7 @@ def run_inference(output_csv: Path, split: str = "test", limit: Optional[int] = 
                 generated[0][inputs["input_ids"].shape[-1] :],
                 skip_special_tokens=True,
             )
-            predicted_letter = CHOICE_LABELS_REVERSED[extract_answer(generated_text, len(choices))]
+            predicted_letter = extract_answer(generated_text, len(choices))
 
 
             writer.writerow(
