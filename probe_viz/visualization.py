@@ -28,10 +28,26 @@ def build_heatmap_figure(payload: HeatmapPayload) -> go.Figure:
     )
 
     fig = go.Figure(data=[heatmap])
+
+    xaxis_config = dict(
+        title=payload.x_axis_title,
+        tickangle=45,
+        automargin=True,
+    )
+    axis_title_lower = str(payload.x_axis_title).lower()
+    if "sentence" in axis_title_lower or payload.view_mode == "sentence":
+        xaxis_config.update(
+            tickmode="array",
+            tickvals=x_labels,
+            ticktext=x_labels,
+        )
+    elif payload.view_mode == "token":
+        xaxis_config["showticklabels"] = False
+
     fig.update_layout(
         template="plotly_white",
         margin=dict(t=50, r=20, b=120, l=80),
-        xaxis=dict(title=payload.x_axis_title, tickangle=45, automargin=True),
+        xaxis=xaxis_config,
         yaxis=dict(title="Layer"),
         height=700,
     )
