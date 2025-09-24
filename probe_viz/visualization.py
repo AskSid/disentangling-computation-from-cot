@@ -56,6 +56,6 @@ def build_heatmap_figure(payload: HeatmapPayload, show_x_labels: bool = True) ->
         margin=dict(t=50, r=20, b=120, l=80),
         xaxis=xaxis_config,
         yaxis=dict(title="Layer"),
-        height=700,
+        height=1050,
     )
     return fig

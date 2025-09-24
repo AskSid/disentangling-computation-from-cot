@@ -119,7 +119,7 @@ def main() -> None:
 
         if selected_view == "token":
             full_response = question_record.full_cot.strip()
-            st.markdown("**Full Model Response:**")
+            st.markdown("### Full Model Response:")
             if full_response:
                 st.write(full_response)
             else:
@@ -161,7 +161,7 @@ def main() -> None:
                 sentence_text = repository.get_sentence_text(
                     int(selected_question), int(selected_sentence)
                 ).strip()
-                st.markdown("**Currently Selected Sentence:**")
+                st.markdown("### Currently Selected Sentence:")
                 if sentence_text:
                     st.write(sentence_text)
                 else:
