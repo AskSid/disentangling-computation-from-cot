@@ -7,12 +7,11 @@ import csv
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from typing import List
+from collections import defaultdict
 
 # Assuming DeepSeek-R1-0528_mmlu-redux_results.csv exists with the following columns:
 # question_idx, question, answer_choices, full_prompt, correct_answer, full_cot, predicted_answer, category
-
-from collections import defaultdict
-
 
 CHOICE_LABELS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -71,12 +70,12 @@ def generate_fake_probing_data(output_dir, questions_csv, N_layers, N_questions)
         sentence_groups = defaultdict(list)
 
         raw_sentences = full_cot.split(delimiter)
-        sentence_texts = []
+        sentence_texts: List[str] = []
         for idx, segment in enumerate(raw_sentences):
+            text = segment
             if idx < len(raw_sentences) - 1:
-                sentence_texts.append(f"{segment}{delimiter}")
-            else:
-                sentence_texts.append(segment)
+                text = f"{segment}{delimiter}"
+            sentence_texts.append(text)
 
         flat_tokens = []  # (sentence_idx, token_id, cleaned_token_text)
         sentence_idx_counter = 0
@@ -132,8 +131,17 @@ def generate_fake_probing_data(output_dir, questions_csv, N_layers, N_questions)
             avg_ans = (
                 argmax_idx if len(avg_output) == 2 else _label_for_choice(argmax_idx)
             )
+            sentence_text = ""
+            if 0 <= s_idx < len(sentence_texts):
+                sentence_text = sentence_texts[s_idx]
             sentence_level_data.append([
-                q_idx, s_idx, l_idx, ed, avg_output, avg_ans
+                q_idx,
+                s_idx,
+                l_idx,
+                ed,
+                avg_output,
+                avg_ans,
+                sentence_text,
             ])
 
         token_level_df = pd.DataFrame(
@@ -162,6 +170,7 @@ def generate_fake_probing_data(output_dir, questions_csv, N_layers, N_questions)
                 'early_decoder',
                 'probe_output',
                 'probe_ans',
+                'sentence_text',
             ],
         )
         sentence_path = sentence_dir / f'question_{question_idx}.csv'

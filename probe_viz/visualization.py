@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from data_loader import HeatmapPayload
 
 
-def build_heatmap_figure(payload: HeatmapPayload) -> go.Figure:
+def build_heatmap_figure(payload: HeatmapPayload, show_x_labels: bool = True) -> go.Figure:
     """Return a Plotly heatmap for the provided payload."""
 
     z = payload.pivot.values.astype(float)
@@ -35,13 +35,20 @@ def build_heatmap_figure(payload: HeatmapPayload) -> go.Figure:
         automargin=True,
     )
     axis_title_lower = str(payload.x_axis_title).lower()
-    if "sentence" in axis_title_lower or payload.view_mode == "sentence":
-        xaxis_config.update(
-            tickmode="array",
-            tickvals=x_labels,
-            ticktext=x_labels,
-        )
-    elif payload.view_mode == "token":
+    if show_x_labels:
+        if "sentence" in axis_title_lower or payload.view_mode == "sentence":
+            xaxis_config.update(
+                tickmode="array",
+                tickvals=x_labels,
+                ticktext=x_labels,
+            )
+        else:
+            xaxis_config.update(
+                tickmode="array",
+                tickvals=x_labels,
+                ticktext=x_labels,
+            )
+    else:
         xaxis_config["showticklabels"] = False
 
     fig.update_layout(

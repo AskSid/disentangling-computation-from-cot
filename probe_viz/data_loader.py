@@ -266,6 +266,10 @@ class ProbeDataRepository:
         df["layer_idx"] = df["layer_idx"].astype(int)
         df["early_decoder"] = df["early_decoder"].astype(str)
         df["probe_output"] = df["probe_output"].apply(ast.literal_eval)
+        if "sentence_text" not in df.columns:
+            df["sentence_text"] = ""
+        else:
+            df["sentence_text"] = df["sentence_text"].fillna("").astype(str)
         return df
 
     def _collect_token_labels(self, subset: pd.DataFrame) -> List[str]:
@@ -282,6 +286,70 @@ class ProbeDataRepository:
                 display = display[:11] + "…"
             labels.append(f"{token_idx}: {display}")
         return labels
+
+    def _build_sentence_previews(
+        self,
+        question_idx: int,
+        sentence_indices: List[int],
+        probe_name: str,
+        sentence_text_lookup: Optional[Dict[int, str]] = None,
+        max_tokens: int = 10,
+        max_chars: int = 60,
+    ) -> Dict[int, str]:
+        previews: Dict[int, str] = {}
+        text_map: Dict[int, str] = {}
+        if sentence_text_lookup:
+            for idx, text in sentence_text_lookup.items():
+                text_map[int(idx)] = str(text)
+
+        missing_indices = [idx for idx in sentence_indices if idx not in text_map]
+
+        if missing_indices:
+            try:
+                token_df = self._load_token_df(question_idx)
+            except FileNotFoundError:
+                token_df = None
+            if token_df is not None:
+                base = token_df[token_df["sentence_idx"].isin(missing_indices)].copy()
+                if not base.empty:
+                    layer_min = int(base["layer_idx"].min())
+                    preferred = base[
+                        (base["early_decoder"] == probe_name)
+                        & (base["layer_idx"] == layer_min)
+                    ]
+                    if preferred.empty:
+                        preferred = base[base["layer_idx"] == layer_min]
+                    if preferred.empty:
+                        preferred = base
+
+                    preferred.sort_values(["sentence_idx", "token_idx"], inplace=True)
+
+                    for sentence_idx in missing_indices:
+                        subset = preferred[preferred["sentence_idx"] == sentence_idx]
+                        if subset.empty:
+                            continue
+                        subset = subset.drop_duplicates(subset=["token_idx"])
+                        tokens = [str(text) for text in subset["token_text"] if str(text)]
+                        summary_tokens = tokens[:max_tokens]
+                        summary = " ".join(summary_tokens).strip()
+                        if len(tokens) > max_tokens:
+                            summary = summary.rstrip() + " …"
+                        text_map[sentence_idx] = summary
+
+        for sentence_idx in sentence_indices:
+            raw_text = text_map.get(sentence_idx, "")
+            collapsed = " ".join(raw_text.split())
+            if not collapsed:
+                collapsed = ""
+            truncated = collapsed
+            ellipsis_needed = len(collapsed) > max_chars
+            if len(truncated) > max_chars:
+                truncated = collapsed[: max_chars - 1].rstrip()
+            if ellipsis_needed:
+                truncated = truncated.rstrip("…") + "…"
+            previews[sentence_idx] = f'{sentence_idx}: "{truncated}"'
+
+        return previews
 
     @staticmethod
     def _format_layer_labels(layer_indices: Iterable[int]) -> List[str]:
@@ -481,7 +549,20 @@ class ProbeDataRepository:
         pivot = subset.pivot(
             index="layer_idx", columns="sentence_idx", values="heat_value"
         ).sort_index().sort_index(axis=1)
-        sentence_labels = [str(idx) for idx in pivot.columns]
+        sentence_indices = [int(idx) for idx in pivot.columns]
+        text_lookup: Dict[int, str] = {}
+        if "sentence_text" in df.columns:
+            text_lookup = (
+                df[["sentence_idx", "sentence_text"]]
+                .drop_duplicates(subset=["sentence_idx"])
+                .set_index("sentence_idx")["sentence_text"]
+                .astype(str)
+                .to_dict()
+            )
+        previews = self._build_sentence_previews(
+            question_idx, sentence_indices, probe_name, text_lookup
+        )
+        sentence_labels = [previews.get(int(idx), str(idx)) for idx in sentence_indices]
         layer_labels = self._format_layer_labels(list(pivot.index))
 
         lookup: Dict[Tuple[int, int], Dict[str, str]] = {}
@@ -542,7 +623,44 @@ class ProbeDataRepository:
         if subset.empty:
             return []
         values = sorted(subset["sentence_idx"].astype(int).unique())
-        return [{"label": f"Sentence {val}", "value": int(val)} for val in values]
+        text_lookup: Dict[int, str] = {}
+        if "sentence_text" in df.columns:
+            text_lookup = (
+                df[["sentence_idx", "sentence_text"]]
+                .drop_duplicates(subset=["sentence_idx"])
+                .set_index("sentence_idx")["sentence_text"]
+                .astype(str)
+                .to_dict()
+            )
+        previews = self._build_sentence_previews(
+            question_idx, values, probe_name, text_lookup
+        )
+        return [{"label": previews.get(val, f"Sentence {val}"), "value": int(val)} for val in values]
+
+    def get_sentence_text(self, question_idx: int, sentence_idx: int) -> str:
+        try:
+            df = self._load_sentence_df(question_idx)
+        except FileNotFoundError:
+            return ""
+
+        subset = df[df["sentence_idx"] == sentence_idx]
+        if subset.empty:
+            return ""
+
+        if "sentence_text" in subset.columns:
+            for raw_text in subset["sentence_text"].dropna().astype(str):
+                collapsed = " ".join(raw_text.split())
+                if collapsed:
+                    return collapsed
+
+        try:
+            token_df = self._load_token_df(question_idx)
+        except FileNotFoundError:
+            return ""
+
+        tokens = [str(tok) for tok in token_df[token_df["sentence_idx"] == sentence_idx]["token_text"]]
+        collapsed_tokens = " ".join(token for token in tokens if token).strip()
+        return collapsed_tokens
 
     def get_sentence_token_payload(
         self, question_idx: int, probe_name: str, sentence_idx: int
