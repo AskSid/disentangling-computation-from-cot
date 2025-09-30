@@ -246,7 +246,7 @@ def main():
     print(f"Starting in mode='{args.mode}'. Config='{args.config}'. Plots dir='{plots_base_dir}'")
 
     if args.mode == "single":
-        layer_idx = int(params.get('layer_idx', 0))
+        layer_idx = int(params.get('layer_idx', 53))
         print(f"Single mode: evaluating layer {layer_idx} with model: {args.model_path}")
         # Rebuild test set for specified layer
         test_dataset = get_test_dataset(cfg, data_dir, layer_idx)
