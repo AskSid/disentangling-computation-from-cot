@@ -14,6 +14,7 @@ from dataclasses import dataclass, replace, asdict
 import random
 import yaml
 import time
+import numpy as np
 
 @dataclass
 class TrainingConfig:
@@ -29,6 +30,17 @@ class TrainingConfig:
     output_dir: str
     run_name: str
     disable_tqdm: bool
+    seed: int
+
+def set_seed(seed: int):
+    """Set random seeds for reproducibility across python, numpy, and torch."""
+    import random as _random
+    _random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     
 def get_question_data(data_dir: str, section: str, idx: int, question_name: str, layer_idx: int, verbose: bool = False, disable_tqdm: bool = False) -> list:
     """
@@ -67,15 +79,18 @@ def get_question_data(data_dir: str, section: str, idx: int, question_name: str,
     model_answer = answer_mapping[model_answer]
     correct_answer = answer_mapping[metadata['correct_answer']]
     seq_len = activations.shape[0]
+    bins = np.linspace(0, seq_len, 21)
     data = []
     for i in range(seq_len):
-        data.append({'activations': activations[i], 'seq_idx': i, 'model_answer': model_answer, 'correct_answer': correct_answer})
+        seq_bin = np.digitize(i, bins)
+        data.append({'activations': activations[i], 'pos_bin': seq_bin, 'model_answer': model_answer, 'correct_answer': correct_answer, 'category': section})
     return data
 
 class ActivationDataset(Dataset):
     """Torch dataset for pairing token-level activations with relevant label type."""
-    def __init__(self, ds: list):
+    def __init__(self, ds: list, include_metadata: bool = False):
         self.ds = ds
+        self.include_metadata = include_metadata
 
     def __len__(self):
         return len(self.ds)
@@ -83,6 +98,10 @@ class ActivationDataset(Dataset):
     def __getitem__(self, idx):
         activation = self.ds[idx]['activations']
         label = torch.tensor(self.ds[idx]['label'], dtype=torch.long if isinstance(self.ds[idx]['label'], int) else torch.float32)
+        if self.include_metadata:
+            pos_bin = torch.tensor(self.ds[idx]['pos_bin'], dtype=torch.long)
+            category = torch.tensor(self.ds[idx]['category'], dtype=torch.long)
+            return activation, label, pos_bin, category
         return activation, label
 
 def get_datasets(cfg: TrainingConfig, data_dir: str, layer_idx: int):
@@ -119,7 +138,7 @@ def get_datasets(cfg: TrainingConfig, data_dir: str, layer_idx: int):
         activation_data, 
         test_size=1-cfg.train_test_split, 
         stratify=labels,
-        random_state=42
+        random_state=cfg.seed
     )
     
     train_dataset = ActivationDataset(train_data)
@@ -272,6 +291,7 @@ def _build_config_from_params(params: dict) -> TrainingConfig:
         output_dir=str(params.get('output_dir', 'results/')),
         run_name=str(params.get('run_name', 'test')),
         disable_tqdm=bool(params.get('disable_tqdm', False)),
+        seed=int(params.get('seed', 42)),
     )
 
 
@@ -396,6 +416,7 @@ def main():
     layer_idx = int(params.get('layer_idx', 0))
 
     cfg = _build_config_from_params(params)
+    set_seed(cfg.seed)
     print(f"Starting {cfg.run_name} with mode {args.mode}")
 
     if args.mode == 'single':

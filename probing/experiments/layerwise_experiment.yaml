@@ -8,7 +8,7 @@ params:
   weight_decay: 0.0
   optimizer_type: Adam       # one of: Adam, SGD
   dtype: bfloat16            # the activations were saved in bfloat16 so we prob won't need to change this ever but just in case
-  num_epochs: 5
+  num_epochs: 4
   data_dir: /mnt/polished-lake/data/mmlu_activations # can also be mmlu_activations_distilled for the 8B model
   output_dir: /mnt/polished-lake/home/sidboppana/disentangling-computation-from-cot/probing/results/ # where to save the results and models
   run_name: "layerwise"
