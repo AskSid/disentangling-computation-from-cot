@@ -109,8 +109,12 @@ def get_datasets(cfg: TrainingConfig, data_dir: str, layer_idx: int):
     categories = get_dataset_config_names("edinburgh-dawg/mmlu-redux-2.0")
     activation_data = []
     for category in tqdm(categories, disable=cfg.disable_tqdm):
-        # had a weird error with the regular cache so setting it to mine
-        ds = load_dataset('edinburgh-dawg/mmlu-redux-2.0', category, cache_dir='/mnt/polished-lake/home/sidboppana/.cache/huggingface/datasets')['test']
+        # changing the cache dir so that i can run as well
+        user = os.environ.get("USER", os.path.basename(os.path.expanduser("~")))
+        cache_dir = f"/mnt/polished-lake/home/{user}/.cache/huggingface/datasets"
+        os.makedirs(cache_dir, exist_ok=True)
+
+        ds = load_dataset('edinburgh-dawg/mmlu-redux-2.0', category, cache_dir=cache_dir)['test']
         for i in range(len(ds)):
             question_data = get_question_data(data_dir, category, i, ds[i]['question'], layer_idx, verbose=False, disable_tqdm=cfg.disable_tqdm)
             if question_data is not None:
