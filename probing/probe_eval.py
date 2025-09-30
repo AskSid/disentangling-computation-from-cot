@@ -227,9 +227,9 @@ def eval_layerwise(layerwise_models: Dict[int, str], cfg, data_dir: str, individ
     return results_by_layer, per_layer_stats
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate trained probes (single or layerwise)")
+    parser = argparse.ArgumentParser(description="Evaluate trained probes (single or all_layers)")
     parser.add_argument("--config", type=str, required=True, help="Path to YAML config used for training")
-    parser.add_argument("--mode", type=str, choices=["single", "layerwise"], required=True)
+    parser.add_argument("--mode", type=str, choices=["single", "all_layers"], required=True)
     parser.add_argument("--model_path", type=str, required=True, help="Path to model file (single) or models dir (layerwise)")
     parser.add_argument("--individual_plots", action='store_true', help="For layerwise, save per-layer plots as well")
 
