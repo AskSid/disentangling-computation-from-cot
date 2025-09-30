@@ -286,6 +286,7 @@ def _build_config_from_params(params: dict) -> TrainingConfig:
         learning_rate=float(params.get('learning_rate', 1e-3)),
         weight_decay=float(params.get('weight_decay', 0.0)),
         optimizer_type=str(params.get('optimizer_type', 'Adam')),
+        reg = 
         dtype=_parse_dtype_name(str(params.get('dtype', 'bfloat16'))),
         num_epochs=int(params.get('num_epochs', 10)),
         output_dir=str(params.get('output_dir', 'results/')),
