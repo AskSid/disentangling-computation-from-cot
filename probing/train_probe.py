@@ -31,6 +31,7 @@ class TrainingConfig:
     run_name: str
     disable_tqdm: bool
     seed: int
+    layer_idx: int
 
 def set_seed(seed: int):
     """Set random seeds for reproducibility across python, numpy, and torch."""
@@ -256,6 +257,7 @@ def train_probe(model: torch.nn.Module, train_dataset: ActivationDataset, test_d
     cfg_dict['dtype'] = str(cfg.dtype)
     log_record = {
         'run_name': cfg.run_name,
+        'layer_idx': cfg.layer_idx,
         'best_test_acc': best_test_acc,
         'config': cfg_dict,
     }
@@ -292,6 +294,7 @@ def _build_config_from_params(params: dict) -> TrainingConfig:
         run_name=str(params.get('run_name', 'test')),
         disable_tqdm=bool(params.get('disable_tqdm', False)),
         seed=int(params.get('seed', 42)),
+        layer_idx=int(params.get('layer_idx', 0)),
     )
 
 
@@ -316,7 +319,7 @@ def train_all_layers(base_params: dict):
         print(f"{'='*50}")
         
         # Create config for this layer - use same run_name for all layers
-        layer_cfg = replace(base_cfg, run_name=base_cfg.run_name)
+        layer_cfg = replace(base_cfg, run_name=base_cfg.run_name, layer_idx=layer_idx)
         
         # Load datasets for this layer
         train_dataset, test_dataset = get_datasets(layer_cfg, data_dir, layer_idx)
