@@ -18,5 +18,5 @@ params:
 sweep:
   # batch_size: [1024, 2048, 4096]
   learning_rate: [0.01, 0.005, 0.001, 0.0005, 0.0001]
-  # weight_decay: [0.0, 0.01]
+  weight_decay: [0.0, 0.0001, 0.001, 0.01, 0.1, 1]
   # optimizer_type: [Adam, SGD]
