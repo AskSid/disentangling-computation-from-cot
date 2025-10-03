@@ -2,11 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# sid you need to edit this to your own paths which is annoying but cest la vie
 # turns yaml to a joblist (txt) if you run in terminal 
 BASE_CFG="probing/experiments/single_layer_sweep.yaml"   # your YAML snippet at top; must contain a 'params:' block with 'layer_idx:' and 'run_name:'
 TRAIN_SCRIPT="/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/train_probe.py"
-OUTROOT="/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing"   # repo root for consistency
+OUTROOT="/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/pr,obing"   # repo root for consistency
 GEN_DIR="$OUTROOT/experiments/layers"      # generated YAMLs go here
 JOBLIST="$OUTROOT/experiments/layers/joblist.txt"
 
