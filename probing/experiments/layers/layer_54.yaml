@@ -9,9 +9,9 @@ params:
   dtype: bfloat16            # the activations were saved in bfloat16 so we prob won't need to change this ever but just in case
   num_epochs: 1
   data_dir: /mnt/polished-lake/data/mmlu_activations # can also be mmlu_activations_distilled for the 8B model
-  layer_idx: 60
+  layer_idx: 54
   output_dir: /mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/results/ # where to save the results and models
-  run_name: "last_layer_lr_sweep"
+  run_name: "last_layer_lr_sweep_layer54"
 
 # Grid of parameters to sweep over. Any keys here override values in params.
 # If it's a single run, comment out this section.

@@ -10,6 +10,7 @@
 
 # Run with: sbatch probing/run_train_probe_a.sh [config_file] [mode]
 # Example: sbatch probing/run_train_probe_a.sh probing/experiments/layerwise_experiment.yaml all_layers
+# sbatch probing/run_train_probe_a.sh probing/experiments/single_layer_sweep.yaml single
 # Or use defaults: sbatch probing/run_train_probe_a.sh
 
 # Print configuration for verification
