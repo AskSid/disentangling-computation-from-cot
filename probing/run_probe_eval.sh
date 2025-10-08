@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=probe_eval
-#SBATCH --output=/mnt/polished-lake/home/sidboppana/disentangling-computation-from-cot/probing/logs/probe_eval_%j.log
+#SBATCH --output=/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/logs/probe_eval_%j.log
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -8,10 +8,10 @@
 #SBATCH --mem=256GB
 #SBATCH --time=12:00:00
 
-# Run with: sbatch probing/run_probe_eval.sh [config_file] [mode] [model_path]
-# Example: sbatch probing/run_probe_eval.sh probing/experiments/layerwise_experiment.yaml all_layers \
+# Run with: sbatch probing/run_probe_eval_a.sh [config_file] [mode] [model_path]
+# Example: sbatch probing/run_probe_eval_a.sh probing/experiments/layerwise_experiment.yaml all_layers \
 #   /mnt/polished-lake/home/sidboppana/disentangling-computation-from-cot/probing/results/layerwise/models
-# Or single: sbatch probing/run_probe_eval.sh probing/experiments/layerwise_experiment.yaml single \
+# Or single: sbatch probing/run_probe_eval_a.sh probing/experiments/layerwise_experiment.yaml single \
 #   /mnt/polished-lake/home/sidboppana/disentangling-computation-from-cot/probing/results/layerwise/models/myrun_layer46.pt
 
 echo "Job Configuration:"
@@ -24,7 +24,7 @@ echo "Node List: ${SLURM_NODELIST}"
 nvidia-smi
 
 # Activate the virtual environment
-source /mnt/polished-lake/home/sidboppana/.cache/pypoetry/virtualenvs/disentangling-computation-from-cot-DeLAc2Hh-py3.10/bin/activate
+source /mnt/polished-lake/home/annabelma/.cache/pypoetry/virtualenvs/disentangling-computation-from-cot-y7e-4Qh5-py3.10/bin/activate
 echo "Virtual environment activated"
 
 # default arguments if none provided
@@ -37,7 +37,7 @@ echo "Using mode: $MODE"
 echo "Using model_path: $MODEL_PATH"
 
 # Run the evaluation script with arguments
-python /mnt/polished-lake/home/sidboppana/disentangling-computation-from-cot/probing/probe_eval.py \
+python /mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/probe_eval.py \
   --config "$CONFIG_FILE" --mode "$MODE" --model_path "$MODEL_PATH"
 
 echo "Evaluation script completed"

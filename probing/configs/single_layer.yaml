@@ -1,0 +1,17 @@
+# Single layer pooling probe experiment
+params:
+  data_dir: "/mnt/polished-lake/data/mmlu_activations"
+  layer_idx: 60  # Last layer
+  probe_type: "mean"  # Options: mean, max, last_token, rolling_means, softmax, attention
+  rolling_window: 5  # For rolling_means
+  softmax_temperature: 1.0  # For softmax
+  label_type: "model_correct"  # Options: model_answer, correct_answer, model_correct
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  num_epochs: 15
+  optimizer_type: "Adam"
+  output_dir: "results/"
+  run_name: "single_layer_mean"
+  seed: 42
+  device: "cuda"

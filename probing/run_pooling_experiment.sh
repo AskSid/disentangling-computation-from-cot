@@ -1,0 +1,48 @@
+#!/bin/bash
+#SBATCH --job-name=pooling_experiment
+#SBATCH --output=/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/logs/pooling_experiment_%j.log
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:1
+#SBATCH --mem=1000GB
+#SBATCH --time=24:00:00
+
+# Usage: sbatch run_pooling_experiment.sh <config_file> [mode]
+# Example: sbatch run_pooling_experiment.sh configs/causal_probe_layer60.yaml sweep
+# Example: sbatch run_pooling_experiment.sh configs/mean.yaml single
+
+# Print configuration for verification
+echo "Job Configuration:"
+echo "Number of Nodes: ${SLURM_NNODES}"
+echo "GPUs per Node: ${SLURM_GPUS_PER_NODE}"
+echo "Total GPUs: $((SLURM_NNODES * SLURM_GPUS_PER_NODE))"
+echo "Master Node: ${SLURMD_NODENAME}"
+echo "Node List: ${SLURM_NODELIST}"
+
+nvidia-smi
+
+# Activate the virtual environment
+source /mnt/polished-lake/home/annabelma/.cache/pypoetry/virtualenvs/disentangling-computation-from-cot-y7e-4Qh5-py3.10/bin/activate
+echo "Virtual environment activated"
+
+# Get arguments
+CONFIG_FILE=${1:-"configs/causal_probe_layer60.yaml"}
+MODE=${2:-"sweep"}
+
+echo "Using config: $CONFIG_FILE"
+echo "Using mode: $MODE"
+
+# Clear corrupted dataset cache
+echo "Clearing corrupted dataset cache..."
+rm -rf /mnt/polished-lake/home/annabelma/.cache/huggingface/datasets/edinburgh-dawg___mmlu-redux-2.0
+
+# Run the pooling experiment
+echo "Starting pooling experiment at $(date)"
+echo "Job ID: $SLURM_JOB_ID"
+
+python /mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/code/train_pooling_probe.py \
+    --config "/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/$CONFIG_FILE" \
+    --mode "$MODE"
+
+echo "Pooling experiment completed at $(date)"

@@ -1,0 +1,22 @@
+# Hyperparameter sweep for specific probe types
+params:
+  data_dir: "/mnt/polished-lake/data/mmlu_activations"
+  layer_idx: 60
+  probe_type: "rolling_means"  # Focus on one probe type
+  rolling_window: 5  # Will be swept over
+  softmax_temperature: 1.0  # Will be swept over
+  label_type: "model_correct"
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  num_epochs: 15
+  optimizer_type: "Adam"
+  output_dir: "results/"
+  run_name: "hyperparameter_sweep"
+  seed: 42
+  device: "cuda"
+
+# Sweep hyperparameters
+sweep:
+  rolling_window: [2, 3, 5, 7, 10, 15, 20]  # Rolling window sizes
+  softmax_temperature: [0.1, 0.5, 1.0, 2.0, 5.0]  # Temperature values

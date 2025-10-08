@@ -1,0 +1,17 @@
+# Train probes on all layers (0-60)
+params:
+  data_dir: "/mnt/polished-lake/data/mmlu_activations"
+  layer_idx: 0  # Will be overridden for each layer
+  probe_type: "mean"  # Fixed probe type for layer comparison
+  rolling_window: 5  # Not used for mean
+  softmax_temperature: 1.0  # Not used for mean
+  label_type: "model_correct"
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  num_epochs: 15
+  optimizer_type: "Adam"
+  output_dir: "results/"
+  run_name: "all_layers_mean"
+  seed: 42
+  device: "cuda"
