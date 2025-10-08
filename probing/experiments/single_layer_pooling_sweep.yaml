@@ -1,0 +1,32 @@
+# Single layer pooling sweep configuration
+params:
+  data_dir: "/mnt/polished-lake/data/mmlu_activations"
+  layer_idx: 32  # Single layer to sweep over
+  probe_type: "mean"  # Default, will be swept over
+  rolling_window: 5  # Default, will be swept over
+  softmax_temperature: 1.0  # Default, will be swept over
+  label_type: "model_correct"
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  optimizer_type: "Adam"
+  dtype: "bfloat16"
+  num_epochs: 10
+  train_test_split: 0.8
+  output_dir: "results/"
+  run_name: "single_layer_pooling_sweep"
+  disable_tqdm: false
+  seed: 42
+  device: "cuda"
+
+# Sweep over different pooling types and their specific hyperparameters
+sweep:
+  probe_type: 
+    - "mean"
+    - "max" 
+    - "last_token"
+    - "rolling_means"
+    - "softmax"
+    - "attention"
+  rolling_window: [3, 5, 7, 10]  # Only affects rolling_means probe
+  softmax_temperature: [0.5, 1.0, 2.0]  # Only affects softmax probe

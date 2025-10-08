@@ -1,0 +1,26 @@
+# Example configuration for pooling probe training
+params:
+  data_dir: "/mnt/polished-lake/data/mmlu_activations"
+  layer_idx: 32
+  probe_type: "mean"  # Options: mean, max, last_token, rolling_means, softmax, attention
+  rolling_window: 5  # For rolling_means probe
+  softmax_temperature: 1.0  # For softmax probe
+  label_type: "model_correct"  # Options: model_answer, correct_answer, model_correct
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  optimizer_type: "Adam"
+  dtype: "bfloat16"
+  num_epochs: 10
+  train_test_split: 0.8
+  output_dir: "results/"
+  run_name: "pooling_probe_experiment"
+  disable_tqdm: false
+  seed: 42
+  device: "cuda"
+
+# Optional: sweep over different probe types
+# sweep:
+#   probe_type: ["mean", "max", "last_token", "softmax"]
+#   rolling_window: [3, 5, 7]  # Only used for rolling_means
+#   softmax_temperature: [0.5, 1.0, 2.0]  # Only used for softmax
