@@ -461,6 +461,159 @@ def create_dummy_datasets() -> Tuple[ActivationDataset, ActivationDataset]:
     )
     return train_dataset, test_dataset
 
+
+
+def load_activations_for_dtw(data_dir: str, layer_idx: int = None, max_questions: int = 100, max_categories: int = None) -> Tuple[List[torch.Tensor], List[str], List[Dict[str, Any]]]:
+    """
+    Load activations for DTW analysis.
+    
+    Args:
+        data_dir: Directory containing activation data
+        layer_idx: Specific layer to load (None for all layers)
+        max_questions: Maximum number of questions to load
+        max_categories: Maximum number of categories to process (None for all)
+    
+    Returns:
+        If layer_idx is specified: (activations_list, question_ids, metadata_list)
+        If layer_idx is None: (activations_by_layer, question_ids, metadata_by_layer) where:
+            - activations_by_layer is {layer_idx: [activation_tensor1, ...]}
+            - metadata_by_layer is {layer_idx: [metadata1, ...]}
+        Each activation tensor has shape [seq_len, hidden_dim]
+        Each metadata dict contains question info, model answers, etc.
+    """
+    import hashlib
+    from datasets import load_dataset
+    
+    # Get available categories
+    categories = _list_cached_configs(os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "datasets"))
+    if max_categories:
+        categories = categories[:max_categories]
+    
+    # Get available layers
+    activations_root = os.path.join(data_dir, "stage2_activations")
+    layer_dirs = []
+    if os.path.exists(activations_root):
+        for entry in os.listdir(activations_root):
+            if entry.startswith("layer_"):
+                layer_num = int(entry.split("_")[1])
+                layer_dirs.append((layer_num, entry))
+    layer_dirs.sort()
+    
+    # Filter to specific layer if requested
+    if layer_idx is not None:
+        layer_dirs = [(layer_num, entry) for layer_num, entry in layer_dirs if layer_num == layer_idx]
+        if not layer_dirs:
+            raise ValueError(f"Layer {layer_idx} not found in {activations_root}")
+    
+    print(f"Found {len(categories)} categories and {len(layer_dirs)} layers")
+    
+    # Initialize storage
+    if layer_idx is not None:
+        # Single layer mode: return list of activations and metadata
+        activations_list = []
+        metadata_list = []
+    else:
+        # All layers mode: return dict of {layer_idx: [activations_list]} and {layer_idx: [metadata_list]}
+        activations_by_layer = {layer_num: [] for layer_num, _ in layer_dirs}
+        metadata_by_layer = {layer_num: [] for layer_num, _ in layer_dirs}
+    
+    question_ids = []
+    
+    question_count = 0
+    for category in categories:
+        if question_count >= max_questions:
+            break
+            
+        print(f"Processing category: {category}")
+        
+        # Load dataset
+        dataset = load_dataset("edinburgh-dawg/mmlu-redux-2.0", category, 
+                              cache_dir=os.path.join(os.path.expanduser("~"), ".cache", "huggingface", "datasets"))["test"]
+        
+        for idx in range(len(dataset)):
+            if question_count >= max_questions:
+                break
+                
+            # Generate question ID
+            question_text = dataset[idx]["question"]
+            question_id = hashlib.md5(f"{category}_{idx}_{question_text}".encode()).hexdigest()[:12]
+            
+            # Load metadata for this question
+            metadata_path = os.path.join(data_dir, "stage1_responses", f"{question_id}.json")
+            metadata = None
+            if os.path.exists(metadata_path):
+                with open(metadata_path, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+            
+            # Check if we have activations for this question
+            if layer_idx is not None:
+                # Single layer mode: check only the specified layer
+                layer_dir = f"layer_{layer_idx}"
+                activation_dir = os.path.join(data_dir, "stage2_activations", layer_dir, question_id)
+                if os.path.exists(activation_dir):
+                    activation_file = os.listdir(activation_dir)[0]
+                    activation_path = os.path.join(activation_dir, activation_file)
+                    
+                    # Load and convert to float32
+                    activations = torch.load(activation_path).float()
+                    activations_list.append(activations)
+                    metadata_list.append(metadata)
+                    question_ids.append(question_id)
+                    question_count += 1
+            else:
+                # All layers mode: check all layers
+                has_all_layers = True
+                question_activations = {}
+                
+                for layer_num, layer_dir in layer_dirs:
+                    activation_dir = os.path.join(data_dir, "stage2_activations", layer_dir, question_id)
+                    if os.path.exists(activation_dir):
+                        activation_file = os.listdir(activation_dir)[0]
+                        activation_path = os.path.join(activation_dir, activation_file)
+                        
+                        # Load and convert to float32
+                        activations = torch.load(activation_path).float()
+                        question_activations[layer_num] = activations
+                    else:
+                        has_all_layers = False
+                        break
+                
+                # Only add if we have activations for all layers
+                if has_all_layers:
+                    for layer_num, activations in question_activations.items():
+                        activations_by_layer[layer_num].append(activations)
+                        metadata_by_layer[layer_num].append(metadata)
+                    
+                    question_ids.append(question_id)
+                    question_count += 1
+    
+    if layer_idx is not None:
+        print(f"Loaded {len(question_ids)} questions with activations and metadata for layer {layer_idx}")
+        
+        # Print summary statistics for single layer
+        if activations_list:
+            seq_lengths = [act.shape[0] for act in activations_list]
+            hidden_dims = [act.shape[1] for act in activations_list]
+            print(f"Layer {layer_idx}: {len(activations_list)} sequences, "
+                  f"seq_len range: [{min(seq_lengths)}, {max(seq_lengths)}], "
+                  f"hidden_dim: {hidden_dims[0]}")
+        
+        return activations_list, question_ids, metadata_list
+    else:
+        print(f"Loaded {len(question_ids)} questions with activations and metadata across all {len(layer_dirs)} layers")
+        
+        # Print summary statistics for all layers
+        for layer_num in sorted(activations_by_layer.keys()):
+            if activations_by_layer[layer_num]:
+                seq_lengths = [act.shape[0] for act in activations_by_layer[layer_num]]
+                hidden_dims = [act.shape[1] for act in activations_by_layer[layer_num]]
+                print(f"Layer {layer_num}: {len(activations_by_layer[layer_num])} sequences, "
+                      f"seq_len range: [{min(seq_lengths)}, {max(seq_lengths)}], "
+                      f"hidden_dim: {hidden_dims[0]}")
+        
+        return activations_by_layer, question_ids, metadata_by_layer
+
+
 def main():
     write_global_question_split_json(
         output_path="/mnt/polished-lake/home/annabelma/disentangling-computation-from-cot/probing/data/question_split.json",

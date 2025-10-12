@@ -21,6 +21,11 @@ class ExperimentConfig:
     mlp_hidden_dim: int          # Hidden size if probe_type == 'mlp'
     r1_model_type: str           # 'full' or 'distilled'
 
+    # Pooling params: 
+    pooling_type: str            # 'none,' 'mean', 'max', 'last_token', 'rolling_means', 'softmax', 'attention'
+    rolling_window: int          # For rolling_means probe
+    softmax_temperature: float   # For softmax probe
+
     # Training params
     batch_size: int              # Global batch size per step
     learning_rate: float         # Optimizer learning rate
@@ -66,4 +71,7 @@ def _build_config_from_params(params: dict) -> ExperimentConfig:
         output_dir=str(params.get('output_dir', 'results/')),
         run_name=str(params.get('run_name', 'test')),
         last_n_tokens=int(params.get('last_n_tokens', 1)),
+        pooling_type=str(params.get('pooling_type', 'none')),
+        rolling_window=int(params.get('rolling_window', 40)),
+        softmax_temperature=float(params.get('softmax_temperature', 5.0)),
     )
