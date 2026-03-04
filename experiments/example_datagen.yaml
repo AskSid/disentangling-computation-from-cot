@@ -1,0 +1,13 @@
+data_generation:
+  model_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+  dataset_name: mmlu
+  output_dir: data/mmlu_1.5b
+  limit: 10                  # number of questions to generate (null for all)
+  max_new_tokens: 8192
+  temperature: 0.6
+  top_p: 0.95
+  tensor_parallel_size: 1
+  num_layers: 28
+  dtype: bfloat16
+  existing_responses_dir: null
+  system_prompt: "The assistant is DeepSeek-R1, created by DeepSeek."

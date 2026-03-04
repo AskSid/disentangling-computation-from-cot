@@ -1,0 +1,5 @@
+streamlit>=1.50.1
+pandas>=2.0
+plotly>=5.0
+fsspec>=2024.6.1
+s3fs>=2024.6.1

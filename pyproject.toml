@@ -1,0 +1,31 @@
+[project]
+name = "disentangling-computation-from-cot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "datasets>=2.18",
+    "streamlit>=1.28",
+    "numpy>=2",
+    "pandas>=2.0",
+    "plotly>=5.20",
+    "torch==2.9.1",
+    "transformers>=4.39",
+    "ipykernel>=6.30.1",
+    "scikit-learn>=1.7.2",
+    "matplotlib>=3.10.6",
+    "s3fs>=2024.6.0",
+    "python-dotenv>=1.0",
+    "seaborn>=0.13",
+    "pyyaml>=6.0.2",
+    "vllm==0.14.1",
+    "nnsight>=0.5.15",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["streamlit_app", "src"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

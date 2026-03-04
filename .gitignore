@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+uv.lock
+
+# Data / Results directories
+streamlit_app/data/
+.streamlit/
+
+**/data/
+**/logs/
+**/results/
+**/plots/
+
+
+# Secrets
+.env
+
+# Virtual environments
+.venv
+
+# Editor/tool config
+.claude/
+.devcontainer/

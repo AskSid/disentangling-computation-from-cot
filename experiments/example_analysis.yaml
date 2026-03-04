@@ -1,0 +1,50 @@
+run:
+  run_name: mmlu_1.5b
+  results_dir: results
+  seed: 42
+
+data:
+  responses_dir: data/mmlu_1.5b/stage1_responses
+  activations_dir: data/mmlu_1.5b/stage2_activations
+  tokenizer_model: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+  split_path: null
+  dataset_name: mmlu-redux
+
+setup:
+  enabled: true
+
+probe:
+  enabled: true
+  train: true
+  eval: true
+  num_layers: 28
+  selected_layer: 17      # -1 for all layers, or a specific layer index
+  probe_type: attention
+  label_type: model_ans
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.01
+  num_epochs: 10
+
+forced_answer:
+  enabled: true
+  generate: true           # set to false if you already have completions
+  tensor_parallel_size: 1
+  batch_size: 100
+
+cot_monitor:
+  enabled: true
+  model: google/gemini-2.5-flash
+  api_key_env: OPENROUTER_API_KEY
+  max_tokens: 8
+  temperature: 0.0
+  per_question_concurrency: 8
+
+plots:
+  enabled: true
+  model_name: DeepSeek-R1-Distill-Qwen-1.5B
+  dataset_name: MMLU-Redux
+
+inflections:
+  enabled: true
+  workers: 10
