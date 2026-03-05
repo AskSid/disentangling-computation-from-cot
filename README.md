@@ -3,6 +3,7 @@
 Codebase for the paper "Reasoning Beliefs: Disentangling Model Beliefs from Chain-of-Thought"
 
 Interactive app of our experiments: https://reasoning-theater.streamlit.app/
+
 Experiments on the app were run on DeepSeek-R1-0528-671B and GPT-OSS-120B across a subset of MMLU-Redux-2.0 and GPQA-Diamond.
 
 ## Setup
