@@ -1,4 +1,4 @@
-# Reasoning Beliefs: Disentangling Model Beliefs from Chain-of-Thought
+# Reasoning Theater: Disentangling Model Beliefs from Chain-of-Thought
 
 Codebase for the paper "Reasoning Theater: Disentangling Model Beliefs from Chain-of-Thought" (https://arxiv.org/abs/2603.05488) 
 
