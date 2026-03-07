@@ -1,6 +1,6 @@
 # Reasoning Beliefs: Disentangling Model Beliefs from Chain-of-Thought
 
-Codebase for the paper "Reasoning Beliefs: Disentangling Model Beliefs from Chain-of-Thought"
+Codebase for the paper "Reasoning Theater: Disentangling Model Beliefs from Chain-of-Thought"
 
 Interactive app of our experiments: https://reasoning-theater.streamlit.app/
 
