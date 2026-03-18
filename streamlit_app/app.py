@@ -176,7 +176,7 @@ def main() -> None:
     with col_view:
         default_view_idx = 0
         for idx, opt in enumerate(view_options):
-            if opt["value"] == "sentence":
+            if opt["value"] == "decoder":
                 default_view_idx = idx
                 break
         selected_view = st.radio(
@@ -325,7 +325,7 @@ def main() -> None:
             )
             if decoder_payload and selected_decoder:
                 decoder_show_x_labels = bool(st.session_state.get(DECODER_SHOW_X_LABELS_KEY, True))
-                figure = build_decoder_bar_figure(decoder_payload, show_x_labels=decoder_show_x_labels)
+                figure = build_decoder_bar_figure(decoder_payload, show_x_labels=decoder_show_x_labels, theme_config=theme_config)
             else:
                 figure = None
             payload = None
@@ -428,10 +428,19 @@ def main() -> None:
     full_response_text = normalize_full_response(question_record.full_cot)
     st.markdown("### Full Response:")
     if full_response_text:
+        is_dark = theme_config.get("base", "light").lower() == "dark"
+        if is_dark:
+            fr_bg = "#1e1e2e"
+            fr_border = "#334162"
+            fr_color = "#f4f7ff"
+        else:
+            fr_bg = "#f5f7ff"
+            fr_border = "#dce3ff"
+            fr_color = "#17203c"
         st.markdown(
             f'<div style="overflow-x:auto; white-space:pre-wrap; max-height:500px; overflow-y:auto; '
-            f'background-color:#f5f7ff; border:1px solid #dce3ff; border-radius:0.6rem; '
-            f'padding:1rem; font-family:monospace; font-size:0.9rem; line-height:1.5;">'
+            f'background-color:{fr_bg}; border:1px solid {fr_border}; border-radius:0.6rem; '
+            f'padding:1rem; font-family:monospace; font-size:0.9rem; line-height:1.5; color:{fr_color};">'
             f'{full_response_text}</div>',
             unsafe_allow_html=True,
         )

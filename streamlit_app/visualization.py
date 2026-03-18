@@ -191,7 +191,11 @@ def build_decoder_bar_figure(
     payload: DecoderStepPayload,
     title: Optional[str] = None,
     show_x_labels: bool = True,
+    theme_config: Optional[Dict[str, str]] = None,
 ) -> go.Figure:
+    is_dark = theme_config and theme_config.get("base", "light").lower() == "dark"
+    text_color = "white" if is_dark else "black"
+
     colors = cycle_palette(len(payload.class_labels))
     traces = []
     x = payload.x_labels
@@ -209,11 +213,11 @@ def build_decoder_bar_figure(
     fig = go.Figure(data=traces)
 
     xaxis_config = dict(
-        title=dict(text="Step", font=dict(size=30, color="black")),
+        title=dict(text="Step", font=dict(size=30, color=text_color)),
         tickangle=45,
         tickmode="array",
         tickvals=x,
-        tickfont=dict(size=24, color="black"),
+        tickfont=dict(size=24, color=text_color),
     )
     if show_x_labels:
         xaxis_config["ticktext"] = [
@@ -228,11 +232,11 @@ def build_decoder_bar_figure(
         title=dict(text=""),
         xaxis=xaxis_config,
         yaxis=dict(
-            title=dict(text="Probability", font=dict(size=30, color="black")),
+            title=dict(text="Probability", font=dict(size=30, color=text_color)),
             range=[0, 1],
-            tickfont=dict(size=24, color="black"),
+            tickfont=dict(size=24, color=text_color),
         ),
-        legend=dict(title=dict(text="Choices", font=dict(size=24, color="black")), font=dict(size=24, color="black")),
+        legend=dict(title=dict(text="Choices", font=dict(size=24, color=text_color)), font=dict(size=24, color=text_color)),
         bargap=0.15,
         margin=dict(t=120, r=300, b=180, l=70),
         height=1000,
@@ -246,7 +250,7 @@ def build_decoder_bar_figure(
             x=0.5,
             y=1.15,
             showarrow=False,
-            font=dict(size=40, color="black"),
+            font=dict(size=40, color=text_color),
             xanchor="center",
         )
     return fig
